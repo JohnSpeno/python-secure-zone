@@ -1,0 +1,110 @@
+#!/usr/bin/env python
+
+"Record the expiration of RRSIG records in a DNS zone."
+
+import sys
+from optparse import OptionParser
+import dns.query
+import dns.zone
+from dns.rdatatype import RRSIG 
+from collections import defaultdict
+from datetime import datetime
+
+try:
+    from graphy.backends import google_chart_api
+except ImportError:
+    google_chart_api = None
+
+TIME_OPTIONS = ('year', 'month', 'day', 'hour', 'minute', 'second')
+
+MAX_STARS = 60
+
+def parse_args():
+    """parse the command-line arguments"""
+    usage = "usage: %prog [options] zone[...]"
+    parser = OptionParser(usage=usage)
+    parser.add_option('-t', dest='chunksize', default='hour',
+        choices=TIME_OPTIONS,
+        help='Specify the time period to which data is aggregated')
+    parser.add_option('-g', dest='graph', action="store_true", default=False,
+        help='Graph results')
+    parser.add_option('-s', dest='server', help='Specify DNS server',
+        default='127.0.0.1')
+    opts, args = parser.parse_args()
+    if not args:
+        parser.print_help()
+    return opts, args
+
+def _make_fmt(chunksize):
+    """Make the format string for a given chunksize."""
+    parts = TIME_OPTIONS.index(chunksize) + 1
+    return '-'.join(['%0.2d'] * parts)
+
+def _make_key(fmt, expiration, chunksize):
+    """Given an expiration date and format, return key"""
+    data = []
+    for interval in TIME_OPTIONS:
+        data.append(getattr(expiration, interval))
+        if interval == chunksize: break
+    return fmt % tuple(data)
+    
+def survey_zone(server, zonename, key_format, chunksize, want_graph):
+    """Count the RRSIGs of a zone by expiration date"""
+    try:
+        zone = dns.zone.from_xfr(dns.query.xfr(server, zonename))
+    except:
+        print >>sys.stderr, "Can't xfer zone '%s' from %s" % (zonename, server)
+        return 1
+    mkdate = datetime.fromtimestamp
+    res = defaultdict(int) 
+    for name, ttl, rdata in zone.iterate_rdatas():
+        if rdata.rdtype == RRSIG:
+            exp = mkdate(rdata.expiration)
+            key = _make_key(key_format, exp, chunksize) 
+            res[key] += 1
+
+    expires = res.keys()
+    expires.sort()
+    freqs = []
+    for expire in expires: 
+        freqs.append(res[expire])
+
+    maximum = max(freqs)
+
+    for expire in expires:
+        if want_graph:
+            freq = float(res[expire])
+            num_stars = (freq / maximum) * MAX_STARS
+            stars = '*' * int(round(num_stars))
+            print '%s\t%s\t%s' % (expire, res[expire], stars) 
+        else:
+            print '%s\t%s' % (expire, res[expire]) 
+            
+    if want_graph:
+        if google_chart_api is not None:
+            midpoint = maximum // 2
+            chart = google_chart_api.BarChart(freqs)
+            chart.vertical = False
+            chart.left.labels = expires
+            chart.bottom.labels = [0, midpoint, maximum]
+            chart.bottom.label_gridlines = True
+            print chart.display.Url(200, 1000) 
+    return 0
+
+def main():
+    """run siggraph"""
+    opt, zones = parse_args() 
+    if not zones:
+        return 1
+    server = opt.server
+    chunksize = opt.chunksize
+    want_graph = opt.graph
+    key_format = _make_fmt(chunksize)
+    rc = 0
+    for zone in zones:
+        print "### %s" % zone
+        rc = survey_zone(server, zone, key_format, chunksize, want_graph)
+    return rc 
+
+if __name__ == '__main__':
+    sys.exit(main())

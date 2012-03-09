@@ -1,0 +1,22 @@
+This project contains tools to manange DNSSEC keys via dynamic DNS updates.
+
+To install:
+
+    python setup.py install
+
+    edit psz.conf to match local configuration
+
+    (as root) cp psz.conf /usr/local/etc/psz.conf
+    (as root) chown named /usr/local/etc/psz.conf
+    (as root) chmod 700 /usr/local/etc/psz.conf
+
+Requires:
+
+    Django 1.1
+    MySQLdb-1.2.1p2 or newer
+    dnspython
+    bind 9.6
+
+Author:
+    John P. Speno
+    john@macspeno.com

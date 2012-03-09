@@ -1,0 +1,8 @@
+zone=$1
+
+nsupdate -k /usr/local/etc/bind/keys/Kassailants.net.isc.upenn.edu.+157+48940.key << _EOF_ 
+server 127.0.0.1
+ttl 420 
+update add foo.$zone IN A 127.0.0.1
+send
+_EOF_

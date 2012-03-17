@@ -23,23 +23,22 @@ Requires
 Usage
 -----
 
-% psz help
-Python Secure Zone
+    % psz help
+    Python Secure Zone
 
-commands:
+    commands:
 
-  status             shows the status of DNSKEYs in a zone
-  secure             initializes DNSSEC for a zone
-  roll_zsk_stage1    perform the 1st stage rollover of zone's ZSK
-  roll_zsk_stage2    perform the 2nd stage rollover of zone's ZSK 
-  roll_ksk_stage1    perform the 1st stage rollover of zone's KSK
-  roll_ksk_stage2    perform the 2nd stage rollover of zone's KSK
-  unsign             removes all DNSKEYs from a zone
-
-  showconfig         display psz's configuration settings
-  createdb           creates database tables for the first time
-  shell              Runs interactive Python shell configured for psz
-  listkeys           Displays all keyfiles for active keys
+      status             shows the status of DNSKEYs in a zone
+      secure             initializes DNSSEC for a zone
+      roll_zsk_stage1    perform the 1st stage rollover of zone's ZSK
+      roll_zsk_stage2    perform the 2nd stage rollover of zone's ZSK 
+      roll_ksk_stage1    perform the 1st stage rollover of zone's KSK
+      roll_ksk_stage2    perform the 2nd stage rollover of zone's KSK
+      unsign             removes all DNSKEYs from a zone
+      showconfig         display psz's configuration settings
+      createdb           creates database tables for the first time
+      shell              Runs interactive Python shell configured for psz
+      listkeys           Displays all keyfiles for active keys
 
 Instructions
 ------------

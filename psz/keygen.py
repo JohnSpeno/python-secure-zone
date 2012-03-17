@@ -20,8 +20,8 @@ def create_key(zone, algorithm, keysize, keytype):
     try:
         process = subprocess.Popen(cmd_args, stdout=subprocess.PIPE)
         output = process.communicate()[0]
-    except OSError, e: 
-        raise PszKeygenError('%s' % e)
+    except OSError, err: 
+        raise PszKeygenError('%s' % err)
     returncode = process.returncode
     if returncode != 0:
         msg = ' '.join(cmd_args)
@@ -31,7 +31,7 @@ def create_key(zone, algorithm, keysize, keytype):
     keytag = nameparts[2]
     try:
         dnsdata = open("%s.key" % keyname).read()[:-1]
-    except OSError, e:
-        raise PszKeygenError('%s' % e)
+    except OSError, err:
+        raise PszKeygenError('%s' % err)
 
     return keyname, dnsdata

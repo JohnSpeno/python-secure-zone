@@ -35,8 +35,8 @@ def _get_config_from_file(config_path):
     try:
         cfg = ConfigObj(infile=config_path, file_error=True,
             unrepr=True, interpolation=False) 
-    except (IOError, ConfigObjError), e:
-        msg = "Error reading %s: %s" % (config_path, e)
+    except (IOError, ConfigObjError), err:
+        msg = "Error reading %s: %s" % (config_path, err)
         log.error(msg)
     return cfg
 
@@ -126,8 +126,8 @@ def main():
         sys.exit(1)
     try:
         rc = tool()
-    except errors.PszConfigError, exc:
-        log.error(exc)
+    except errors.PszConfigError, err:
+        log.error(err)
     sys.exit(rc)
 
 if __name__ == '__main__':

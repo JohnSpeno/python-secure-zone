@@ -36,6 +36,7 @@ KEY_STATUSES = (
     ('deleted', 'key pair files have been deleted'),
 )
 
+
 class DnskeyManager(Manager):
     """
     Provides convenience methods for Dnskey objects.
@@ -44,11 +45,12 @@ class DnskeyManager(Manager):
         """
         Returns the non expired keys for a zone or for all zones if
         no zone is specified.
-        """ 
+        """
         qs = self.get_query_set().exclude(status__in=['expired', 'deleted'])
         if zone:
             qs = qs.filter(zone=zone)
         return qs
+
 
 class BaseDnskey(models.Model):
     """
@@ -60,32 +62,36 @@ class BaseDnskey(models.Model):
     zone = models.TextField(db_index=True)
     type = models.CharField(max_length=32, choices=KEY_TYPES)
     size = models.IntegerField()
-    status = models.CharField(max_length=128, choices=KEY_STATUSES,
-                default='new')
+    status = models.CharField(
+        max_length=128, choices=KEY_STATUSES,
+        default='new'
+    )
     updated = models.DateTimeField(default=datetime.now)
 
     class Meta:
-            abstract = True
-    
+        abstract = True
+
     objects = DnskeyManager()
 
     def __cmp__(self, other):
         return cmp(self.type, other.type)
 
     def __unicode__(self):
-        return "%s %s %s (%s %s bits)" % (self.zone, self.type, self.keytag,
-            self.algorithm, self.size)
+        return "%s %s %s (%s %s bits)" % (
+            self.zone, self.type, self.keytag, self.algorithm, self.size
+            )
 
 _KEY_LOCATIONS = {
-    'new'           : config.DEFAULTS['path_newkeydir'],
-    'published'     : config.DEFAULTS['path_newkeydir'],
-    'pre-active'    : '',
-    'active'        : '',
-    'ksk+rolled-stage1' : '',
-    'zsk+rolled-stage1' : config.DEFAULTS['path_oldkeydir'],
-    'expired'       : config.DEFAULTS['path_oldkeydir'],
-    'deleted'       : None,
+    'new': config.DEFAULTS['path_newkeydir'],
+    'published': config.DEFAULTS['path_newkeydir'],
+    'pre-active': '',
+    'active': '',
+    'ksk+rolled-stage1': '',
+    'zsk+rolled-stage1': config.DEFAULTS['path_oldkeydir'],
+    'expired': config.DEFAULTS['path_oldkeydir'],
+    'deleted': None,
 }
+
 
 def _key_file_path(zone, keytype, keystatus):
     """
@@ -101,12 +107,13 @@ def _key_file_path(zone, keytype, keystatus):
         return None
     return str(os.path.join(config.DEFAULTS['path_zonedir'], zone, subdir))
 
+
 class Dnskey(BaseDnskey):
     """
     A Dnskey that exists on the filesystem as a keypair.
     """
-    def __init__(self, *args, **kwargs): 
-        super(Dnskey, self).__init__(*args, **kwargs) 
+    def __init__(self, *args, **kwargs):
+        super(Dnskey, self).__init__(*args, **kwargs)
         self._dnsdata = None
         self._directory = None
         self._keyname = None
@@ -129,7 +136,7 @@ class Dnskey(BaseDnskey):
     @dnsdata.setter
     def dnsdata(self, value):
         self._dnsdata = value
-   
+
     @property
     def keyname(self):
         if self._keyname is None:
@@ -177,9 +184,9 @@ class Dnskey(BaseDnskey):
 
     def move(self, destination):
         """
-        Move key's files to destination. 
+        Move key's files to destination.
         """
-        public_file = '%s.key' % self.keyname  
+        public_file = '%s.key' % self.keyname
         new_path_public = os.path.join(destination, public_file)
         try:
             os.rename(self.path_public, new_path_public)
@@ -187,7 +194,7 @@ class Dnskey(BaseDnskey):
             raise PszError('%s' % e)
         self._path_public = new_path_public
 
-        private_file = '%s.private' % self.keyname 
+        private_file = '%s.private' % self.keyname
         new_path_private = os.path.join(destination, private_file)
         try:
             os.rename(self.path_private, new_path_private)
@@ -221,9 +228,9 @@ class Dnskey(BaseDnskey):
         self.updated = datetime.now()
         self.save()
 
-    @classmethod 
+    @classmethod
     def from_dnssec_keygen(cls, zone, keytype='ZSK', algname=None, size=None):
-        """Create key pair on disk and return's Dnskey instance
+        """Create key pair on disk and returns Dnskey instance
         The instance isn't saved in the ORM by default.
         XXX move this to keygen directory?
         """
@@ -234,12 +241,15 @@ class Dnskey(BaseDnskey):
         keyname, dnsdata = keygen.create_key(zone, algname, size, keytype)
         nameparts = keyname.split('+')
         keytag = nameparts[2]
-        inst = cls(algorithm=algname, keytag=keytag, zone=zone, type=keytype,
-                    size=size)
+        inst = cls(
+            algorithm=algname, keytag=keytag,
+            zone=zone, type=keytype, size=size,
+        )
         inst.dnsdata = dnsdata
         inst.keyname = keyname
         inst.directory = os.getcwd()
         return inst
+
 
 class LogMessage(models.Model):
     zone = models.TextField(db_index=True)
